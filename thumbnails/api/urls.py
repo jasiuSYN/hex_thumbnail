@@ -1,7 +1,12 @@
 from django.urls import path
-from .views import ImageViewListCreateAPIView, TierCreateAPIView
+from .views import (
+    ImageListAPIView,
+    TierCreateAPIView,
+    ImageUploadAPIView,
+)
 
 urlpatterns = [
-    path("api/images/", ImageViewListCreateAPIView.as_view(), name="images_user"),
-    path("api/tiers/", TierCreateAPIView.as_view(), name="tier_create"),
+    path("api/image/list", ImageListAPIView.as_view(), name="image_list"),
+    path("api/image/upload", ImageUploadAPIView.as_view(), name="image_upload"),
+    path("api/tier/create", TierCreateAPIView.as_view(), name="tier_create"),
 ]
