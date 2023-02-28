@@ -1,10 +1,12 @@
-from rest_framework import generics
-from api.models import Image, Tier
-from api.serializers import ImageSerializer, TierSerializer
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework import generics, status
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
+
+from api.models import Image
+from api.serializers import ImageSerializer, TierSerializer, ThumbnailSerializer
 
 
-class ImageViewListCreateAPIView(generics.ListCreateAPIView):
+class ImageListAPIView(generics.ListAPIView):
     serializer_class = ImageSerializer
     permission_classes = [IsAuthenticated]
 
@@ -12,10 +14,24 @@ class ImageViewListCreateAPIView(generics.ListCreateAPIView):
         return Image.objects.filter(profile__user=self.request.user)
 
 
-class TierCreateAPIView(generics.CreateAPIView):
-    serializer_class = TierSerializer
-    permission_classes = [IsAdminUser]
+class ImageUploadAPIView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ThumbnailSerializer
 
-    def get_queryset(self):
-        print(self.request)
-        return Tier.objects.get_or_create()
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        profile = request.user.profile
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        if profile.tier.allow_original_file_link == False:
+            return Response(
+                serializer.data.get("thumbnails"), status=status.HTTP_201_CREATED
+            )
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class TierCreateAPIView(generics.CreateAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = TierSerializer
