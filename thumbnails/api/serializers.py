@@ -1,14 +1,8 @@
-from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework import serializers
+from easy_thumbnails.files import get_thumbnailer
 
-from api.models import Image, Profile, ThumbnailSize, Tier
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["username"]
+from api.models import Image, ThumbnailSize, Tier, Profile
 
 
 class ThumbnailSizeSerializer(serializers.ModelSerializer):
@@ -29,33 +23,54 @@ class TierSerializer(serializers.ModelSerializer):
             "allow_expiring_links",
         ]
 
+    @transaction.atomic
     def create(self, validated_data):
         thumbnail_sizes_data = validated_data.pop("thumbnail_size")
-        thumbnail_sizes = []
+        thumbnail_sizes_instaces = []
 
         for thumbnail_size in thumbnail_sizes_data:
-            size, _ = ThumbnailSize.objects.get_or_create(**thumbnail_size)
-            thumbnail_sizes.append(size)
+            size_instance, _ = ThumbnailSize.objects.get_or_create(**thumbnail_size)
+            thumbnail_sizes_instaces.append(size_instance)
 
-        with transaction.atomic():
-            tier = Tier.objects.create(**validated_data)
-            tier.thumbnail_size.add(*thumbnail_sizes)
+        tier = Tier.objects.create(**validated_data)
+        tier.thumbnail_size.add(*thumbnail_sizes_instaces)
+        tier.save()
 
         return tier
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    tier = TierSerializer(read_only=True)
-
-    class Meta:
-        model = Profile
-        fields = ["user", "tier"]
-
-
 class ImageSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(read_only=True)
-
     class Meta:
         model = Image
         fields = ["profile", "image"]
+
+
+class ThumbnailSerializer(serializers.ModelSerializer):
+    thumbnails = serializers.SerializerMethodField()
+    allow_expiring_links = serializers.SerializerMethodField()
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        profile = user.profile
+        validated_data["profile"] = profile
+
+        return super().create(validated_data)
+
+    def get_thumbnails(self, obj):
+        user_tier_sizes = obj.profile.get_thumbnail_sizes()
+        thumbnail_urls = {}
+        for size in user_tier_sizes:
+            thumbnail_options = {"size": (size, 0), "crop": True}
+            thumbnail_url = (
+                get_thumbnailer(obj.image).get_thumbnail(thumbnail_options).url
+            )
+            thumbnail_urls[f"thumbnail_{size}"] = thumbnail_url
+
+        return thumbnail_urls
+
+    def get_allow_expiring_links(self, obj):
+        return obj.profile.tier.allow_expiring_links
+
+    class Meta:
+        model = Image
+        fields = ["image", "thumbnails", "allow_expiring_links"]
