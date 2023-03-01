@@ -1,8 +1,8 @@
 from django.db import transaction
-from rest_framework import serializers
 from easy_thumbnails.files import get_thumbnailer
+from rest_framework import serializers
 
-from api.models import Image, ThumbnailSize, Tier, Profile
+from api.models import Image, ThumbnailSize, Tier
 
 
 class ThumbnailSizeSerializer(serializers.ModelSerializer):
@@ -42,7 +42,7 @@ class TierSerializer(serializers.ModelSerializer):
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
-        fields = ["profile", "image"]
+        fields = ["image"]
 
 
 class ThumbnailSerializer(serializers.ModelSerializer):
@@ -58,6 +58,7 @@ class ThumbnailSerializer(serializers.ModelSerializer):
 
     def get_thumbnails(self, obj):
         user_tier_sizes = obj.profile.get_thumbnail_sizes()
+
         thumbnail_urls = {}
         for size in user_tier_sizes:
             thumbnail_options = {"size": (size, 0), "crop": True}

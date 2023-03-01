@@ -1,9 +1,6 @@
 from django.urls import path
-from .views import (
-    ImageListAPIView,
-    TierCreateAPIView,
-    ImageUploadAPIView,
-)
+
+from .views import ImageListAPIView, ImageUploadAPIView, TierCreateAPIView
 
 urlpatterns = [
     path("api/image/list", ImageListAPIView.as_view(), name="image_list"),

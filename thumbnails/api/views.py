@@ -3,7 +3,8 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from api.models import Image
-from api.serializers import ImageSerializer, TierSerializer, ThumbnailSerializer
+from api.serializers import (ImageSerializer, ThumbnailSerializer,
+                             TierSerializer)
 
 
 class ImageListAPIView(generics.ListAPIView):

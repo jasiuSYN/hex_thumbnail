@@ -1,5 +1,6 @@
 from django.contrib import admin
-from api.models import ThumbnailSize, Tier, Profile, Image
+
+from api.models import Image, Profile, ThumbnailSize, Tier
 
 # Register your models here.
 
