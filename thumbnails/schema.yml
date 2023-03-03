@@ -1,0 +1,134 @@
+openapi: 3.0.3
+info:
+  title: ''
+  version: 0.0.0
+paths:
+  /api/image/list:
+    get:
+      operationId: image_list_list
+      tags:
+      - image
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Image'
+          description: ''
+  /api/image/upload:
+    post:
+      operationId: image_upload_create
+      tags:
+      - image
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Thumbnail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Thumbnail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Thumbnail'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thumbnail'
+          description: ''
+  /api/tier/create:
+    post:
+      operationId: tier_create_create
+      tags:
+      - tier
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tier'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Tier'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Tier'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tier'
+          description: ''
+components:
+  schemas:
+    Image:
+      type: object
+      properties:
+        image:
+          type: string
+          format: uri
+          pattern: (?:jpeg|png)$
+    Thumbnail:
+      type: object
+      properties:
+        image:
+          type: string
+          format: uri
+          pattern: (?:jpeg|png)$
+        thumbnails:
+          type: string
+          readOnly: true
+        allow_expiring_links:
+          type: string
+          readOnly: true
+      required:
+      - allow_expiring_links
+      - thumbnails
+    ThumbnailSize:
+      type: object
+      properties:
+        size:
+          type: integer
+          maximum: 720
+          minimum: 10
+      required:
+      - size
+    Tier:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        thumbnail_size:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThumbnailSize'
+        allow_original_file_link:
+          type: boolean
+        allow_expiring_links:
+          type: boolean
+      required:
+      - name
+      - thumbnail_size
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
