@@ -1,8 +1,15 @@
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from easy_thumbnails.files import get_thumbnailer
 from rest_framework import serializers
 
-from api.models import Image, ThumbnailSize, Tier
+from api.models import Image, Profile, ThumbnailSize, Tier
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ["username"]
 
 
 class ThumbnailSizeSerializer(serializers.ModelSerializer):
@@ -45,7 +52,18 @@ class ImageSerializer(serializers.ModelSerializer):
         fields = ["image"]
 
 
+class ProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    tier = TierSerializer(read_only=True)
+    images = ImageSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Profile
+        fields = ["user", "tier", "images"]
+
+
 class ThumbnailSerializer(serializers.ModelSerializer):
+    original_link = serializers.ImageField(source="image")
     thumbnails = serializers.SerializerMethodField()
     allow_expiring_links = serializers.SerializerMethodField()
 
@@ -74,4 +92,4 @@ class ThumbnailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Image
-        fields = ["image", "thumbnails", "allow_expiring_links"]
+        fields = ["original_link", "thumbnails", "allow_expiring_links"]
