@@ -63,7 +63,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class ThumbnailSerializer(serializers.ModelSerializer):
-    original_link = serializers.ImageField(source="image")
+    image = serializers.ImageField(write_only=True)
+    original_link = serializers.SerializerMethodField()
     thumbnails = serializers.SerializerMethodField()
     allow_expiring_links = serializers.SerializerMethodField()
 
@@ -73,6 +74,11 @@ class ThumbnailSerializer(serializers.ModelSerializer):
         validated_data["profile"] = profile
 
         return super().create(validated_data)
+
+    def get_original_link(self, obj):
+        request = self.context.get('request')
+        photo_url = obj.image.url
+        return request.build_absolute_uri(photo_url)
 
     def get_thumbnails(self, obj):
         user_tier_sizes = obj.profile.get_thumbnail_sizes()
@@ -92,4 +98,4 @@ class ThumbnailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Image
-        fields = ["original_link", "thumbnails", "allow_expiring_links"]
+        fields = ["original_link", "thumbnails", "allow_expiring_links", "image"]
